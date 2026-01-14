@@ -72,7 +72,8 @@ async fn main() {
         env::var("TAS_SERVER_API_KEY").unwrap_or("/etc/tas_agent/api_key".to_string()),
     );
     let key_id = env::var("TAS_KEY_ID").expect("TAS_KEY_ID must be set");
-    let cert_path = env::var("TAS_SERVER_ROOT_CERT").expect("TAS_SERVER_ROOT_CERT must be set");
+    let cert_path =
+        PathBuf::from(env::var("TAS_SERVER_ROOT_CERT").expect("TAS_SERVER_ROOT_CERT must be set"));
 
     let api_key = read_to_string(api_key_path.clone())
         .expect(&format!("unable to read API key from {:?}", api_key_path));
@@ -96,7 +97,7 @@ async fn main() {
     );
 
     // Call the function to get the TAS server version
-    match tas_get_version(&server_uri, &api_key, &cert_path).await {
+    match tas_get_version(&server_uri, &api_key, cert_path.clone()).await {
         Ok(version) => debug_println!(cli.debug, "TEE Attestation Server Version: {}", version),
         Err(err) => {
             eprintln!("TAS Version Error: {}", err);
@@ -105,7 +106,7 @@ async fn main() {
     }
 
     // Call the function to get the nonce from the TAS server
-    let nonce = match tas_get_nonce(&server_uri, &api_key, &cert_path).await {
+    let nonce = match tas_get_nonce(&server_uri, &api_key, cert_path.clone()).await {
         Ok(nonce) => {
             debug_println!(cli.debug, "Nonce: {}", nonce);
             nonce
@@ -142,7 +143,7 @@ async fn main() {
         &tee_type,
         &key_id,
         &wrapping_key,
-        &cert_path,
+        cert_path.clone(),
     )
     .await
     {
